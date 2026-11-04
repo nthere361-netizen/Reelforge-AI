@@ -21,41 +21,27 @@ Audiences consume knowledge predominantly through video and audio, yet immense a
 ## 2. System Architecture
 
 ```mermaid
-flowchart TD
-    subgraph Client["React Client (Vite + TypeScript + Tailwind)"]
-        UI["App UI: Auth / Ingestion / Editor / Studio / Preview / Dashboard"]
-        Player["Synchronized Preview Player<br/>(Ken Burns Motion + Web Audio Clock)"]
-        RQ["TanStack Query Cache + State"]
+flowchart LR
+    User(["Creator / User"]) --> Input["1. Input Source<br/>(Text / Doc / URL / Idea)"]
+    
+    subgraph Frontend["Frontend Studio (React + Vite)"]
+        Input --> UI["Project Dashboard & Editor"]
+        UI --> Preview["Synchronized Video Player"]
+    end
+    
+    subgraph Backend["Backend API (Express.js)"]
+        UI -->|"API Request"| Server["ReelForge API Server"]
+        Server -->|"Server-Side AI Call"| AI["Google Gemini AI<br/>(Script + Voice + Visuals)"]
+        Server -->|"Free Rendering"| FFmpeg["FFmpeg Video Engine<br/>(Free MP4 Generator)"]
+    end
+    
+    subgraph Cloud["Database & Storage (Supabase)"]
+        Server <-->|"Store & Retrieve"| DB[("PostgreSQL DB<br/>& Media Storage")]
     end
 
-    subgraph Server["Express API Server (Node.js 20+ TypeScript)"]
-        MW["Auth Middleware + Rate Limiters + Zod Validator + Error Handler"]
-        Routers["Modular Routers: /sources, /projects, /scenes, /exports, /me"]
-        SSRF["SSRF Protection Layer & DNS Resolution Guard"]
-        WAVEngine["PCM-to-WAV Audio Engine & Concat Pipeline"]
-    end
-
-    subgraph Supabase["Supabase Cloud Platform"]
-        Auth["Supabase Auth (JWT)"]
-        DB[("PostgreSQL with Row Level Security - RLS")]
-        Storage[("Supabase Storage: project-audio & project-images")]
-    end
-
-    subgraph Gemini["Google Gemini Generative AI"]
-        GeminiText["Gemini 2.5 Flash<br/>(Structured JSON & Analysis)"]
-        GeminiTTS["Gemini Speech Generation<br/>(Multimodal TTS Engine)"]
-        GeminiImg["Gemini Image Generation<br/>(Imagen / Flash Vision)"]
-    end
-
-    UI -->|JWT Auth & REST API| MW
-    MW --> Routers
-    Routers --> SSRF
-    Routers --> WAVEngine
-    Routers -->|JWT-Scoped Client| DB
-    Routers -->|Storage Admin| Storage
-    Routers -->|Server-Only API Key| Gemini
-    Player -->|Signed Storage URLs 1h TTL| Storage
-    Client -->|User Auth| Auth
+    AI -->|"Generated Assets"| Server
+    FFmpeg -->|"Rendered MP4"| Preview
+    Preview --> Export["Export Package<br/>(MP4 / Audio / Subtitles / PDF)"]
 ```
 
 ---
