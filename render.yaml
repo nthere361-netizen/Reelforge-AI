@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: reelforge-ai-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build:shared && npm run build:server
+    startCommand: node server/dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_TEXT_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_TTS_MODEL
+        value: gemini-2.5-flash-preview-tts
+      - key: GEMINI_IMAGE_MODEL
+        value: gemini-2.5-flash-image
