@@ -17,7 +17,7 @@ const EnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
   GEMINI_API_KEY: z.string().min(1),
-  GEMINI_TEXT_MODEL: z.string().default('gemini-2.5-flash'),
+  GEMINI_TEXT_MODEL: z.string().default('gemini-3-flash-preview'),
   GEMINI_TTS_MODEL: z.string().default('gemini-2.5-flash-preview-tts'),
   GEMINI_IMAGE_MODEL: z.string().default('gemini-2.5-flash-image'),
 

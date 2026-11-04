@@ -86,10 +86,13 @@ sourcesRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       res.setHeader('Cache-Control', 'no-store');
+      const ideaText = req.body.idea || req.body.topic;
+      const domainVal = req.body.preferred_domain || req.body.domain;
+      const platformVal = req.body.preferred_platform || req.body.target_platform;
       const result = await SourceService.expandIdea({
-        idea: req.body.idea,
-        preferredDomain: req.body.preferred_domain,
-        preferredPlatform: req.body.preferred_platform,
+        idea: ideaText,
+        preferredDomain: domainVal,
+        preferredPlatform: platformVal,
       });
       res.status(200).json({ data: result, error: null });
     } catch (err) {

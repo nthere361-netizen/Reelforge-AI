@@ -23,13 +23,30 @@ export function errorHandler(
     });
   }
 
+  // Handle any ZodError that slipped through without being wrapped
+  if ((err as any)?.name === 'ZodError' || Array.isArray((err as any)?.issues)) {
+    const issues = (err as any).issues || [];
+    const details = issues.map((i: any) => ({
+      path: Array.isArray(i.path) ? i.path.join('.') : String(i.path || ''),
+      message: i.message,
+    }));
+    return res.status(400).json({
+      data: null,
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+        details,
+      },
+    });
+  }
+
   logger.error({ err, path: req.path, method: req.method }, 'Unhandled internal error');
   return res.status(500).json({
     data: null,
     error: {
       code: 'INTERNAL',
-      message: 'An internal server error occurred. Please try again later.',
-      ...(env.NODE_ENV === 'development' ? { details: err.message } : {}),
+      message: err.message || 'An internal server error occurred. Please try again later.',
+      ...(env.NODE_ENV === 'development' ? { details: err.stack } : {}),
     },
   });
 }

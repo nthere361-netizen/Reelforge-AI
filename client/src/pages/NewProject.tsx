@@ -143,12 +143,19 @@ export const NewProject: React.FC = () => {
     setExtractSuccess(null);
 
     try {
+      const trimmedIdea = ideaInput.trim();
+      const currentDomain = watch('domain') || 'general';
+      const currentPlatform = watch('target_platform') || 'youtube_shorts';
+
       const res = await apiRequest<ExpandIdeaResponse>('/sources/expand-idea', {
         method: 'POST',
         body: JSON.stringify({
-          topic: ideaInput.trim(),
-          domain: watch('domain') || 'general',
-          target_platform: watch('target_platform') || 'youtube_shorts',
+          idea: trimmedIdea,
+          topic: trimmedIdea,
+          domain: currentDomain,
+          preferred_domain: currentDomain,
+          target_platform: currentPlatform,
+          preferred_platform: currentPlatform,
         }),
       });
 

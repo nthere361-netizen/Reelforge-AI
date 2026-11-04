@@ -99,11 +99,17 @@ export type UpdateProfile = z.infer<typeof UpdateProfileSchema>;
 
 export const ExpandIdeaRequestSchema = z
   .object({
-    idea: z.string().min(3, 'Idea must be at least 3 characters').max(1000),
+    idea: z.string().min(1).max(2000).optional(),
+    topic: z.string().min(1).max(2000).optional(),
     preferred_domain: z.string().optional(),
+    domain: z.string().optional(),
     preferred_platform: z.string().optional(),
+    target_platform: z.string().optional(),
   })
-  .strict();
+  .refine((data) => !!(data.idea || data.topic), {
+    message: 'Either idea or topic must be provided',
+    path: ['idea'],
+  });
 export type ExpandIdeaRequest = z.infer<typeof ExpandIdeaRequestSchema>;
 
 export const DocumentTopicsRequestSchema = z

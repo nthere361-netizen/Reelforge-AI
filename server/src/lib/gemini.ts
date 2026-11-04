@@ -46,11 +46,19 @@ export async function generateStructured<S extends ZodTypeAny>(opts: {
 }): Promise<z.infer<S>> {
   // Generate JSON Schema from Zod
   const jsonSchema = zodToJsonSchema(opts.schema, { target: 'openAi' });
+  delete (jsonSchema as any)['$schema'];
 
-  const call = (prompt: string) =>
+  const candidateModels = [
+    env.GEMINI_TEXT_MODEL,
+    'gemini-3-flash-preview',
+    'gemini-3.1-flash-lite',
+    'gemini-3.8-flash',
+  ].filter((m, idx, arr) => m && arr.indexOf(m) === idx);
+
+  const callWithModel = (prompt: string, model: string) =>
     withRetry(() =>
       ai.models.generateContent({
-        model: env.GEMINI_TEXT_MODEL,
+        model,
         contents: prompt,
         config: {
           systemInstruction: opts.systemInstruction,
@@ -63,10 +71,21 @@ export async function generateStructured<S extends ZodTypeAny>(opts: {
     );
 
   let res: any;
-  try {
-    res = await call(opts.prompt);
-  } catch (err: any) {
-    logger.error({ err }, 'Gemini text API upstream error');
+  let lastErr: any;
+  for (const model of candidateModels) {
+    try {
+      res = await callWithModel(opts.prompt, model);
+      if (res?.text) {
+        break;
+      }
+    } catch (err: any) {
+      lastErr = err;
+      logger.warn({ model, err: err?.message || err }, 'Gemini model attempt failed, trying fallback');
+    }
+  }
+
+  if (!res?.text) {
+    logger.error({ err: lastErr }, 'All Gemini text candidate models failed');
     throw new AppError('AI_UPSTREAM_ERROR', 502, 'Failed to communicate with AI provider');
   }
 
@@ -77,7 +96,7 @@ export async function generateStructured<S extends ZodTypeAny>(opts: {
       parsed.issues
     ).slice(0, 1500)}. Return corrected JSON only, matching the schema exactly.`;
     try {
-      res = await call(repair);
+      res = await callWithModel(repair, candidateModels[0]);
     } catch (err: any) {
       logger.error({ err }, 'Gemini repair call failed');
       throw new AppError('AI_UPSTREAM_ERROR', 502, 'AI repair retry request failed');
