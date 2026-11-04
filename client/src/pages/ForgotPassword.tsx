@@ -7,7 +7,11 @@ import { supabase } from '../lib/supabase';
 import { KeyRound, AlertCircle, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
 
 const ForgotSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email('Please enter a valid email address'),
 });
 
 type ForgotFormValues = z.infer<typeof ForgotSchema>;
@@ -30,7 +34,8 @@ export const ForgotPassword: React.FC = () => {
     setSuccessMsg(null);
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
+      const cleanEmail = values.email.trim().toLowerCase();
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
@@ -39,7 +44,7 @@ export const ForgotPassword: React.FC = () => {
         return;
       }
 
-      setSuccessMsg('A password reset link has been dispatched to your email address.');
+      setSuccessMsg(`A password reset link has been dispatched to ${cleanEmail}. Please check your inbox and spam folder.`);
     } catch (err: any) {
       setAuthError(err.message || 'Failed to request password reset');
     } finally {

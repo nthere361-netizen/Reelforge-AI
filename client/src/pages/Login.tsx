@@ -7,8 +7,12 @@ import { supabase } from '../lib/supabase';
 import { Video, LogIn, AlertCircle, Loader2 } from 'lucide-react';
 
 const LoginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password is required'),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 type LoginFormValues = z.infer<typeof LoginSchema>;
@@ -16,11 +20,15 @@ type LoginFormValues = z.infer<typeof LoginSchema>;
 export const Login: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
   const isExpired = searchParams.get('expired') === '1';
+  const prefilledEmail = searchParams.get('email') || '';
 
   const from = (location.state as any)?.from?.pathname || '/dashboard';
 
@@ -30,19 +38,38 @@ export const Login: React.FC = () => {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
+    defaultValues: {
+      email: prefilledEmail,
+    },
   });
 
   const onSubmit = async (values: LoginFormValues) => {
     setAuthError(null);
+    setUnconfirmedEmail(null);
+    setResendStatus(null);
     setSubmitting(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
+        email: values.email.trim().toLowerCase(),
         password: values.password,
       });
 
       if (error) {
-        setAuthError(error.message);
+        if (
+          error.message.toLowerCase().includes('email not confirmed') ||
+          error.message.toLowerCase().includes('not confirmed')
+        ) {
+          setUnconfirmedEmail(values.email.trim().toLowerCase());
+          setAuthError(
+            'Your email has not been confirmed yet. Please verify your email inbox or request a new confirmation link below.'
+          );
+        } else if (error.message.toLowerCase().includes('invalid login credentials')) {
+          setAuthError(
+            'Invalid email or password. Please verify your credentials or use "Forgot password?" to reset it.'
+          );
+        } else {
+          setAuthError(error.message);
+        }
         return;
       }
 
@@ -51,6 +78,27 @@ export const Login: React.FC = () => {
       setAuthError(err.message || 'An unexpected error occurred during sign in');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail) return;
+    setResending(true);
+    setResendStatus(null);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: unconfirmedEmail,
+      });
+      if (error) {
+        setResendStatus(`Failed: ${error.message}`);
+      } else {
+        setResendStatus('Confirmation link sent! Please check your inbox and spam folder.');
+      }
+    } catch (err: any) {
+      setResendStatus(err.message || 'Could not resend confirmation link');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -73,9 +121,26 @@ export const Login: React.FC = () => {
         )}
 
         {authError && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <span>{authError}</span>
+          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex flex-col gap-2">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <span>{authError}</span>
+            </div>
+            {unconfirmedEmail && (
+              <div className="mt-2 pt-2 border-t border-rose-500/20 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={resending}
+                  className="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-medium text-xs w-fit transition disabled:opacity-50"
+                >
+                  {resending ? 'Sending...' : 'Resend Email Confirmation Link'}
+                </button>
+                {resendStatus && (
+                  <span className="text-xs text-slate-300 font-medium">{resendStatus}</span>
+                )}
+              </div>
+            )}
           </div>
         )}
 

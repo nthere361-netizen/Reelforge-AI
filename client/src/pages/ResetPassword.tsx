@@ -10,7 +10,7 @@ const ResetSchema = z
   .object({
     password: z
       .string()
-      .min(10, 'Password must be at least 10 characters long'),
+      .min(6, 'Password must be at least 6 characters long'),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
