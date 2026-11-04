@@ -23,28 +23,28 @@ Audiences consume knowledge predominantly through video and audio, yet immense a
 ```mermaid
 flowchart TD
     subgraph Client["React Client (Vite + TypeScript + Tailwind)"]
-        UI[App UI: Auth / Ingestion / Editor / Studio / Preview / Dashboard]
-        Player[Synchronized Preview Player\n(Ken Burns Motion + Web Audio Clock)]
-        RQ[TanStack Query Cache + State]
+        UI["App UI: Auth / Ingestion / Editor / Studio / Preview / Dashboard"]
+        Player["Synchronized Preview Player<br/>(Ken Burns Motion + Web Audio Clock)"]
+        RQ["TanStack Query Cache + State"]
     end
 
     subgraph Server["Express API Server (Node.js 20+ TypeScript)"]
-        MW[Auth Middleware + Rate Limiters + Zod Validator + Error Handler]
-        Routers[Modular Routers: /sources, /projects, /scenes, /exports, /me]
-        SSRF[SSRF Protection Layer & DNS Resolution Guard]
-        WAVEngine[PCM-to-WAV Audio Engine & Concat Pipeline]
+        MW["Auth Middleware + Rate Limiters + Zod Validator + Error Handler"]
+        Routers["Modular Routers: /sources, /projects, /scenes, /exports, /me"]
+        SSRF["SSRF Protection Layer & DNS Resolution Guard"]
+        WAVEngine["PCM-to-WAV Audio Engine & Concat Pipeline"]
     end
 
     subgraph Supabase["Supabase Cloud Platform"]
-        Auth[Supabase Auth (JWT)]
-        DB[(PostgreSQL with Row Level Security - RLS)]
-        Storage[(Supabase Storage: project-audio & project-images)]
+        Auth["Supabase Auth (JWT)"]
+        DB[("PostgreSQL with Row Level Security - RLS")]
+        Storage[("Supabase Storage: project-audio & project-images")]
     end
 
     subgraph Gemini["Google Gemini Generative AI"]
-        GeminiText[Gemini 2.5 Flash\n(Structured JSON & Analysis)]
-        GeminiTTS[Gemini Speech Generation\n(Multimodal TTS Engine)]
-        GeminiImg[Gemini Image Generation\n(Imagen / Flash Vision)]
+        GeminiText["Gemini 2.5 Flash<br/>(Structured JSON & Analysis)"]
+        GeminiTTS["Gemini Speech Generation<br/>(Multimodal TTS Engine)"]
+        GeminiImg["Gemini Image Generation<br/>(Imagen / Flash Vision)"]
     end
 
     UI -->|JWT Auth & REST API| MW
